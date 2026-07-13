@@ -1,5 +1,6 @@
 "use client";
 
+import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -71,6 +72,29 @@ export default function LoginPage() {
             Registrarse
           </Link>
         </p>
+        
+        <div>
+          <button
+            type="button"
+            className="text-white"
+            onClick={async () => {
+              const supabase = createClient()
+              const { error } = await supabase.auth.signInWithOAuth({
+                provider: "google",
+                options: {
+                  redirectTo: `${window.location.origin}/auth/callback?next=/`,
+                },
+              })
+
+              if (error) {
+                console.error("Error iniciando sesión con Google:", error.message)
+              }
+            }}
+          >
+            Google
+          </button>
+        </div>
+
       </div>
     </div>
   );
