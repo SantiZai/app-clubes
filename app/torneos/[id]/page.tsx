@@ -44,7 +44,7 @@ export default async function TorneoDetallePage({
               {torneo.banner && (
                 <div className="relative h-64 sm:h-80 md:h-96 w-full">
                   <img src={torneo.banner} alt={torneo.nombre} className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/10" />
+                  <div className="absolute inset-0 bg-linear-to-t from-black/75 via-transparent to-black/10" />
 
                   <div className="absolute left-6 top-6">
                     <span className="inline-block rounded-full bg-black/40 px-3 py-1 text-xs font-semibold text-zinc-200 border border-zinc-800">
@@ -105,14 +105,14 @@ export default async function TorneoDetallePage({
                   <div className="premium-card p-4 flex items-center justify-between" style={{ borderRadius: "16px" }}>
                     <div>
                       <div className="text-xs text-zinc-400">Campeones</div>
-                      <div className="mt-1 font-semibold text-[var(--accent)]">$100.000</div>
+                      <div className="mt-1 font-semibold text-accent">$100.000</div>
                     </div>
                   </div>
 
                   <div className="premium-card p-4 flex items-center justify-between" style={{ borderRadius: "16px" }}>
                     <div>
                       <div className="text-xs text-zinc-400">Subcampeones</div>
-                      <div className="mt-1 font-semibold text-[var(--accent)]">$50.000</div>
+                      <div className="mt-1 font-semibold text-accent">$50.000</div>
                     </div>
                   </div>
                 </div>
