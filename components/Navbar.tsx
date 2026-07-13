@@ -1,8 +1,24 @@
 "use client";
 
+import { useAuth } from "@/hooks/useAuth";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import {
+  Avatar,
+  AvatarImage,
+  AvatarFallback
+} from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 const links = [
   { href: "/", label: "Inicio" },
@@ -13,11 +29,23 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
+  const { user } = useAuth();
+
+  const handleSignOut = async () => {
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
+
   return (
     <nav className="sticky top-0 z-50 border-b border-zinc-800 bg-zinc-950/60 backdrop-blur-sm">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
         <Link href="/" className="flex items-center gap-3 text-lg font-bold tracking-tight">
-          <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-400 text-black font-black">
+          <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-linear-to-br from-emerald-500 to-emerald-400 text-black font-black">
             PC
           </span>
           <span className="text-white">PádelClub</span>
@@ -28,31 +56,68 @@ export default function Navbar() {
             <Link
               key={l.href}
               href={l.href}
-              className={`text-sm transition-colors ${
-                pathname === l.href
-                  ? "text-white"
-                  : "text-zinc-400 hover:text-white"
-              }`}
+              className={`text-sm transition-colors ${pathname === l.href
+                ? "text-white"
+                : "text-zinc-400 hover:text-white"
+                }`}
             >
               {l.label}
             </Link>
           ))}
         </div>
 
-        <div className="hidden items-center gap-3 sm:flex">
-          <Link
-            href="/login"
-            className="text-sm text-zinc-300 transition-colors hover:text-white px-3 py-2"
-          >
-            Iniciar sesión
-          </Link>
-          <Link
-            href="/register"
-            className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-emerald-400"
-          >
-            Registrarse
-          </Link>
-        </div>
+        {
+          user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger className="hover:bg-accent-foreground rounded-lg p-2">
+                <div className="flex items-center justify-center gap-2">
+                  <Avatar>
+                    <AvatarImage src={user.avatar_url ?? undefined} />
+                    <AvatarFallback>{user.name!.slice(0, 2).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                  <p className="text-white">{user.name}</p>
+                </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-accent-foreground text-white">
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel>Mi cuenta</DropdownMenuLabel>
+                  <DropdownMenuItem className="hover:bg-emerald-500">
+                    <Link href="/profile" className="w-full">Perfil</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem disabled>
+                    Ajustes
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem className="hover:bg-transparent">
+                    <button
+                      onClick={handleSignOut}
+                      className="w-full text-left text-emerald-400 hover:underline hover:bg-transparent"
+                    >
+                      Cerrar sesión
+                    </button>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <div className="hidden items-center gap-3 sm:flex">
+              <Link
+                href="/login"
+                className="text-sm text-zinc-300 transition-colors hover:text-white px-3 py-2"
+              >
+                Iniciar sesión
+              </Link>
+              <Link
+                href="/register"
+                className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-emerald-400"
+              >
+                Registrarse
+              </Link>
+            </div>
+          )
+        }
 
         <button
           className="p-2 text-zinc-400 transition-colors hover:text-white sm:hidden"
