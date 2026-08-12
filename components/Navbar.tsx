@@ -19,6 +19,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import type { Tables } from "@/types/database.types";
+
+type User = Tables<"usuarios">
 
 const links = [
   { href: "/", label: "Inicio" },
@@ -69,7 +72,7 @@ export default function Navbar() {
         {
           user ? (
             <>
-              {user.rol && (user.rol === "admin" || user.rol === "administrador") ? (
+              {user.rol && (user.rol === "admin" && user.club_id) ? (
                 <Link
                   href="/admin"
                   className="hidden text-sm text-emerald-400 transition-colors hover:text-emerald-300 sm:inline-flex"
@@ -174,7 +177,7 @@ export default function Navbar() {
           <hr className="border-zinc-800" />
           {user ? (
             <>
-              {user.rol === "admin" || user.rol === "administrador" ? (
+              {user.rol === "admin" ? (
                 <Link
                   href="/admin"
                   className="text-sm text-zinc-300"

@@ -1,5 +1,7 @@
 import { createClient } from "./supabase/client";
-import { User } from "@/types/db";
+import type { Tables } from "@/types/database.types"
+
+type User = Tables<"usuarios">
 
 export const upsertUser = async (supabaseUser: any): Promise<User> => {
   const supabase = await createClient();

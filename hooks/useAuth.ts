@@ -3,8 +3,10 @@
 import { createContext, useContext, useEffect, useState, createElement, type ReactNode } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { User as SupabaseUser, Session } from "@supabase/supabase-js";
-import { User } from "@/types/db";
+import type { Tables } from "@/types/database.types";
 import { upsertUser } from "@/lib/userUtils";
+
+type User = Tables<"usuarios">
 
 interface AuthContextValue {
   supabaseUser: SupabaseUser | null;
