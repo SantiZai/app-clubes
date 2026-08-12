@@ -68,39 +68,49 @@ export default function Navbar() {
 
         {
           user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger className="hover:bg-accent-foreground rounded-lg p-2">
-                <div className="flex items-center justify-center gap-2">
-                  <Avatar>
-                    <AvatarImage src={user.avatar_url ?? undefined} />
-                    <AvatarFallback>{user.name!.slice(0, 2).toUpperCase()}</AvatarFallback>
-                  </Avatar>
-                  <p className="text-white">{user.name}</p>
-                </div>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-accent-foreground text-white">
-                <DropdownMenuGroup>
-                  <DropdownMenuLabel>Mi cuenta</DropdownMenuLabel>
-                  <DropdownMenuItem className="hover:bg-emerald-500">
-                    <Link href="/profile" className="w-full">Perfil</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem disabled>
-                    Ajustes
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-                <DropdownMenuSeparator />
-                <DropdownMenuGroup>
-                  <DropdownMenuItem className="hover:bg-transparent">
-                    <button
-                      onClick={handleSignOut}
-                      className="w-full text-left text-emerald-400 hover:underline hover:bg-transparent"
-                    >
-                      Cerrar sesión
-                    </button>
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <>
+              {user.rol && (user.rol === "admin" || user.rol === "administrador") ? (
+                <Link
+                  href="/admin"
+                  className="hidden text-sm text-emerald-400 transition-colors hover:text-emerald-300 sm:inline-flex"
+                >
+                  Panel admin
+                </Link>
+              ) : null}
+              <DropdownMenu>
+                <DropdownMenuTrigger className="hover:bg-accent-foreground rounded-lg p-2">
+                  <div className="flex items-center justify-center gap-2">
+                    <Avatar>
+                      <AvatarImage src={user.avatar_url ?? undefined} />
+                      <AvatarFallback>{user.name!.slice(0, 2).toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                    <p className="text-white">{user.name}</p>
+                  </div>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="bg-accent-foreground text-white">
+                  <DropdownMenuGroup>
+                    <DropdownMenuLabel>Mi cuenta</DropdownMenuLabel>
+                    <DropdownMenuItem className="hover:bg-emerald-500">
+                      <Link href="/profile" className="w-full">Perfil</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem disabled>
+                      Ajustes
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem className="hover:bg-transparent">
+                      <button
+                        onClick={handleSignOut}
+                        className="w-full text-left text-emerald-400 hover:underline hover:bg-transparent"
+                      >
+                        Cerrar sesión
+                      </button>
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
           ) : (
             <div className="hidden items-center gap-3 sm:flex">
               <Link
@@ -162,20 +172,52 @@ export default function Navbar() {
             </Link>
           ))}
           <hr className="border-zinc-800" />
-          <Link
-            href="/login"
-            className="text-sm text-zinc-300"
-            onClick={() => setOpen(false)}
-          >
-            Iniciar sesión
-          </Link>
-          <Link
-            href="/register"
-            className="text-sm text-zinc-300"
-            onClick={() => setOpen(false)}
-          >
-            Registrarse
-          </Link>
+          {user ? (
+            <>
+              {user.rol === "admin" || user.rol === "administrador" ? (
+                <Link
+                  href="/admin"
+                  className="text-sm text-zinc-300"
+                  onClick={() => setOpen(false)}
+                >
+                  Panel admin
+                </Link>
+              ) : null}
+              <Link
+                href="/profile"
+                className="text-sm text-zinc-300"
+                onClick={() => setOpen(false)}
+              >
+                Perfil
+              </Link>
+              <button
+                onClick={() => {
+                  handleSignOut();
+                  setOpen(false);
+                }}
+                className="text-left text-sm text-zinc-300 hover:text-white"
+              >
+                Cerrar sesión
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="text-sm text-zinc-300"
+                onClick={() => setOpen(false)}
+              >
+                Iniciar sesión
+              </Link>
+              <Link
+                href="/register"
+                className="text-sm text-zinc-300"
+                onClick={() => setOpen(false)}
+              >
+                Registrarse
+              </Link>
+            </>
+          )}
         </div>
       )}
     </nav>

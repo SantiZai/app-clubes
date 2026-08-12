@@ -42,8 +42,12 @@ export async function updateSession(request: NextRequest) {
 
   const user = data?.claims
 
+  // Allow unauthenticated access to public API routes.
+  const isPublicApiRoute = request.nextUrl.pathname.startsWith('/api/')
+
   if (
     !user &&
+    !isPublicApiRoute &&
     request.nextUrl.pathname !== '/' &&
     !request.nextUrl.pathname.startsWith('/login') &&
     !request.nextUrl.pathname.startsWith('/register') &&

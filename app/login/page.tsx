@@ -3,12 +3,37 @@
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [form, setForm] = useState({ email: "", password: "" });
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setLoading(true);
+    setErrorMsg(null);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signInWithPassword({
+        email: form.email,
+        password: form.password,
+      });
+
+      if (error) {
+        setErrorMsg(error.message);
+        setLoading(false);
+        return;
+      }
+
+      // on success redirect to homepage
+      router.push("/");
+    } catch (err: any) {
+      setErrorMsg(err?.message ?? "Error desconocido");
+      setLoading(false);
+    }
   }
 
   return (
@@ -57,10 +82,17 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            className="mt-2 w-full rounded-lg bg-emerald-500 py-2.5 font-semibold text-black transition-colors hover:bg-emerald-400"
+            disabled={loading}
+            className={`mt-2 w-full rounded-lg bg-emerald-500 py-2.5 font-semibold text-black transition-colors ${
+              loading ? "opacity-60 cursor-not-allowed" : "hover:bg-emerald-400"
+            }`}
+            aria-busy={loading}
           >
-            Entrar
+            {loading ? "Entrando..." : "Entrar"}
           </button>
+          {errorMsg && (
+            <p className="mt-2 text-sm text-red-400">{errorMsg}</p>
+          )}
         </form>
 
         <p className="mt-6 text-center text-sm text-zinc-500">

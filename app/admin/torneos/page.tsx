@@ -317,6 +317,12 @@ export default function AdminTorneosPage() {
                   >
                     Eliminar
                   </button>
+                  <Link
+                    href={`/admin/torneos/${t.id}/manage`}
+                    className="text-xs text-zinc-500 transition-colors hover:text-zinc-300"
+                  >
+                    Gestionar
+                  </Link>
                 </div>
               </div>
             ))}
