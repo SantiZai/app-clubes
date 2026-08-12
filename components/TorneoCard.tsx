@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { Torneo } from "@/lib/data";
+import type { Tables } from "@/types/database.types";
 import LogoMap from "@/components/logos";
+
+/* TODO: cambiar el tipado para usar el tipado que provee supabase */
+//type Tournament = Tables<"torneos">
 
 const badgeBg: Record<string, string> = {
   Masculino: "bg-blue-700/20 text-blue-300",
@@ -34,7 +38,7 @@ export default function TorneoCard({ torneo }: { torneo: Torneo }) {
       {torneo.banner && (
         <div className="relative h-44 w-full">
           <img src={torneo.banner} alt={torneo.nombre} className="h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/10" />
+          <div className="absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-black/10" />
         </div>
       )}
 
@@ -102,7 +106,7 @@ export default function TorneoCard({ torneo }: { torneo: Torneo }) {
             </div>
 
             <div className="shrink-0">
-              <div className="rounded-lg bg-[var(--accent)] px-3 py-1 text-black text-sm font-semibold">
+              <div className="rounded-lg bg-accent px-3 py-1 text-black text-sm font-semibold">
                 Inscribirme
               </div>
             </div>
