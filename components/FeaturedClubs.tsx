@@ -43,7 +43,7 @@ export default function FeaturedClubs() {
                 <div className="text-sm font-semibold text-white">{c.name}</div>
                 <div className="text-xs text-zinc-400">{c.city}</div>
                 <div className="mt-2 text-xs text-zinc-400">{c.tournaments} torneos · {c.players} jugadores</div>
-                <div className="mt-2 text-sm font-semibold text-[var(--accent)]">{c.rating ?? 4.5} ★</div>
+                <div className="mt-2 text-sm font-semibold text-accent">{c.rating ?? 4.5} ★</div>
               </div>
             </div>
           ))}

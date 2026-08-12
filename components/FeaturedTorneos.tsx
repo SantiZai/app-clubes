@@ -16,7 +16,7 @@ export default function FeaturedTorneos() {
           <article key={t.id} className="glass-card overflow-hidden card-hover">
             <div className="relative h-44 w-full">
               <img src={t.banner} alt={t.nombre} className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/10" />
+              <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-black/10" />
             </div>
 
             <div className="p-4">
@@ -26,13 +26,13 @@ export default function FeaturedTorneos() {
                   <div className="text-xs text-zinc-400 mt-1">{t.club} · {new Date(t.fecha).toLocaleDateString()}</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-lg font-extrabold text-[var(--accent)]">${t.precio}</div>
+                  <div className="text-lg font-extrabold text-accent">${t.precio}</div>
                   <div className="text-xs text-zinc-400">{t.inscriptos}/{t.cupos}</div>
                 </div>
               </div>
 
               <div className="mt-4 flex items-center justify-between">
-                <Link href={`/torneos/${t.id}`} className="rounded-md bg-[var(--accent)] px-4 py-2 text-black font-semibold">
+                <Link href={`/torneos/${t.id}`} className="rounded-md bg-accent px-4 py-2 text-black font-semibold">
                   Ver evento
                 </Link>
                 <div className="badge-premium">Destacado</div>
