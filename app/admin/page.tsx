@@ -23,7 +23,7 @@ export default function AdminDashboardPage() {
     );
   }
 
-  if (!user || !(user.rol === "admin" || user.rol === "administrador")) {
+  if (!user || !(user.rol === "admin")) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 text-white">
         <div className="rounded-3xl border border-zinc-800 bg-zinc-900 p-8">

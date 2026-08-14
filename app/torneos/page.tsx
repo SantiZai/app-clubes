@@ -1,4 +1,4 @@
-import { torneos } from "@/lib/data";
+import { torneosMock } from "@/lib/data";
 import TorneoCard from "@/components/TorneoCard";
 
 export const metadata = {
@@ -6,7 +6,7 @@ export const metadata = {
 };
 
 export default function TorneosPage() {
-  const activos = torneos.filter((t) => t.activo);
+  const activos = torneosMock.filter((t) => t.estado == "inscripciones");
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">

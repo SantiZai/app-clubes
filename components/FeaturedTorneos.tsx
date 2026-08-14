@@ -1,8 +1,12 @@
 import Link from "next/link";
-import { torneos } from "@/lib/data";
+import { torneosMock } from "@/lib/data";
+
+import type { Tables } from "@/types/database.types";
+
+type Tournament = Tables<"torneos">
 
 export default function FeaturedTorneos() {
-  const featured = [...torneos].sort((a, b) => (b.inscriptos || 0) - (a.inscriptos || 0)).slice(0, 3);
+  const featured = [...torneosMock].sort((a, b) => (b.parejas_inscriptas || 0) - (a.parejas_inscriptas || 0)).slice(0, 3);
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
@@ -15,7 +19,7 @@ export default function FeaturedTorneos() {
         {featured.map((t) => (
           <article key={t.id} className="glass-card overflow-hidden card-hover">
             <div className="relative h-44 w-full">
-              <img src={t.banner} alt={t.nombre} className="w-full h-full object-cover" />
+              <img src={t.banner!} alt={t.nombre} className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-black/10" />
             </div>
 
@@ -23,11 +27,11 @@ export default function FeaturedTorneos() {
               <div className="flex items-start justify-between">
                 <div>
                   <h4 className="text-lg font-bold text-white truncate">{t.nombre}</h4>
-                  <div className="text-xs text-zinc-400 mt-1">{t.club} · {new Date(t.fecha).toLocaleDateString()}</div>
+                  <div className="text-xs text-zinc-400 mt-1">{t.club_id} · {new Date(t.fecha_inicio!).toLocaleDateString()}</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-lg font-extrabold text-accent">${t.precio}</div>
-                  <div className="text-xs text-zinc-400">{t.inscriptos}/{t.cupos}</div>
+                  <div className="text-lg font-extrabold text-accent">${t.precio_inscripcion}</div>
+                  <div className="text-xs text-zinc-400">{t.parejas_inscriptas}/{t.cupos}</div>
                 </div>
               </div>
 

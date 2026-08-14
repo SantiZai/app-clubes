@@ -1,17 +1,20 @@
 import Reveal from "./Reveal";
-import { torneos } from "@/lib/data";
+import { torneosMock } from "@/lib/data";
 import { clubs as CLUBS } from "@/lib/clubs";
 import fs from "fs";
 import path from "path";
+import type { Tables } from "@/types/database.types";
+
+type Tournament = Tables<"torneos">
 
 export default function FeaturedClubs() {
   const map = new Map<string, any>();
 
   // Start from the curated CLUBS list so we can show city/rating
   CLUBS.forEach((c) => {
-    const clubTorneos = torneos.filter((t) => t.club === c.name);
+    const clubTorneos = torneosMock.filter((t) => t.club_id === c.name);
     const tournaments = clubTorneos.length;
-    const players = clubTorneos.reduce((s, t) => s + (t.inscriptos || 0), 0);
+    const players = clubTorneos.reduce((s, t) => s + (t.parejas_inscriptas || 0), 0);
 
     // prefer curated photo if exists
     let photo = c.photo;

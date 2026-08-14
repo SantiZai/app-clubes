@@ -31,7 +31,11 @@ type PlayerProfile = {
   email: string | null;
 };
 
-export default function ManageTorneoPage({ params }: { params: { id: string } }) {
+export default function ManageTorneoPage({
+  params,
+}: {
+  params: Promise<{ id: string }> | { id: string };
+}) {
   const router = useRouter();
   const [routeId, setRouteId] = useState<string | null>(null);
   const [text, setText] = useState("");
@@ -95,13 +99,30 @@ export default function ManageTorneoPage({ params }: { params: { id: string } })
   const [editingAvailabilityIndex, setEditingAvailabilityIndex] = useState<number | null>(null);
 
   useEffect(() => {
-    // params can be a server promise in App Router; resolve it when needed
-    if (params && typeof (params as any).then === "function") {
-      (params as Promise<{ id: string }>).then((p) => setRouteId(p.id)).catch(() => null)
-    } else {
-      setRouteId((params as any).id)
-    }
-  }, [params])
+    let isMounted = true;
+
+    const resolveRouteId = async () => {
+      try {
+        const resolvedParams = await Promise.resolve(
+          params as { id: string } | Promise<{ id: string }>
+        );
+
+        if (isMounted) {
+          setRouteId(resolvedParams.id);
+        }
+      } catch {
+        if (isMounted) {
+          setRouteId(null);
+        }
+      }
+    };
+
+    resolveRouteId();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [params]);
 
   useEffect(() => {
     if (!routeId) return
@@ -657,8 +678,8 @@ export default function ManageTorneoPage({ params }: { params: { id: string } })
     const pairIndex = new Map<string, number>()
     pool.forEach((pair, index) => pairIndex.set(pair.id, index))
 
-    const dp = new Map<bigint, CandidateSolution>()
-    dp.set(0n, {
+    const dp = new Map<number, CandidateSolution>()
+    dp.set(0, {
       selected: [],
       assigned: 0,
       targetZones: 0,
@@ -671,7 +692,7 @@ export default function ManageTorneoPage({ params }: { params: { id: string } })
     })
 
     for (const candidate of candidates) {
-      const candidateMask = candidate.pairIds.reduce((mask, id) => mask | (1n << BigInt(pairIndex.get(id)!)), 0n)
+      const candidateMask = candidate.pairIds.reduce((mask, id) => mask | (1 << pairIndex.get(id)!), 0)
       const currentEntries = Array.from(dp.entries())
       for (const [mask, solution] of currentEntries) {
         if (mask & candidateMask) continue
@@ -694,7 +715,7 @@ export default function ManageTorneoPage({ params }: { params: { id: string } })
       }
     }
 
-    let bestSolution = dp.get(0n)!
+    let bestSolution = dp.get(0)!
     for (const solution of dp.values()) {
       if (betterSolution(solution, bestSolution)) bestSolution = solution
     }

@@ -1,11 +1,11 @@
 import Link from "next/link";
 import Stats from "./Stats";
-import { torneos } from "@/lib/data";
+import { torneosMock } from "@/lib/data";
 import fs from "fs";
 import path from "path";
 
 export default function Hero() {
-  const destacado = torneos.find((t) => t.activo) ?? torneos[0];
+  const destacado = torneosMock.find((t) => t.estado == "inscripciones") ?? torneosMock[0];
   const publicHeroPath = path.join(process.cwd(), "public", "images", "hero-padel.jpg");
   const heroSrc = fs.existsSync(publicHeroPath) ? "/images/hero-padel.jpg" : (destacado.banner ?? "/images/hero-padel.jpg");
 
@@ -14,7 +14,7 @@ export default function Hero() {
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 items-center">
           <div>
-            <span className="inline-block text-sm font-semibold uppercase tracking-widest text-[var(--accent)]">
+            <span className="inline-block text-sm font-semibold uppercase tracking-widest text-accent">
               PádelClub
             </span>
 
@@ -30,7 +30,7 @@ export default function Hero() {
             <div className="mt-6 flex flex-wrap gap-3">
               <Link
                 href="/torneos"
-                className="inline-block rounded-xl bg-[var(--accent)] px-6 py-3 text-black font-semibold shadow-md transition hover:brightness-95 glow-hover"
+                className="inline-block rounded-xl bg-accent px-6 py-3 text-black font-semibold shadow-md transition hover:brightness-95 glow-hover"
               >
                 Explorar torneos
               </Link>
@@ -42,13 +42,13 @@ export default function Hero() {
           </div>
 
           <div className="relative hidden md:block">
-            <div className="relative w-[460px] h-[300px] rounded-2xl overflow-hidden shadow-xl">
+            <div className="relative w-115 h-[75 rounded-2xl overflow-hidden shadow-xl">
               <img
                 src={heroSrc}
                 alt={destacado.nombre}
                 className="h-full w-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/10" />
+              <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-black/10" />
             </div>
 
             <div className="absolute -right-6 bottom-6 w-72 glass-card p-4 glow-hover reveal">
@@ -61,12 +61,12 @@ export default function Hero() {
                     {destacado.nombre}
                   </div>
                   <div className="mt-1 text-xs text-zinc-400">
-                    {destacado.club} · {new Date(destacado.fecha).toLocaleDateString()}
+                    {destacado.club_id} · {new Date(destacado.fecha_inicio!).toLocaleDateString()}
                   </div>
                 </div>
 
                 <div className="shrink-0">
-                  <div className="rounded-md bg-[var(--accent)] px-3 py-1 text-black text-sm font-semibold">
+                  <div className="rounded-md bg-accent px-3 py-1 text-black text-sm font-semibold">
                     Inscribirme
                   </div>
                 </div>
