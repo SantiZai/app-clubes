@@ -1,9 +1,10 @@
 import { createClient } from "./supabase/client";
 import type { Tables, TablesInsert } from "@/types/database.types";
 
+type Tournament = Tables<"torneos">
 type TournamentInsert = TablesInsert<"torneos">
 
-export const createTournament = async (tournament: TournamentInsert) => {
+export const createTournament = async (tournament: TournamentInsert): Promise<Tournament> => {
   const supabase = await createClient();
 
   const { data, error } = await supabase
