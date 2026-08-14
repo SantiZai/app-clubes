@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, CheckCircle2, PencilLine, Trash2 } from "lucide-react";
 
@@ -13,11 +13,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { torneosMock as mockData } from "@/lib/data";
 import { createTournament } from "@/lib/tournamentsUtils";
+import { getAdminClub } from "@/lib/clubUtils";
 
 import type { Tables, TablesInsert } from "@/types/database.types";
+import { useAuth } from "@/hooks/useAuth";
 
 type Tournament = Tables<"torneos">
 type TournamentInsert = TablesInsert<"torneos">
+type Club = Tables<"clubes">
 
 type FormState = {
   nombre: string;
@@ -49,6 +52,42 @@ export default function AdminTorneosPage() {
   const [lista, setLista] = useState<TournamentInsert[]>(mockData);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [toast, setToast] = useState(false);
+  const [club, setClub] = useState<Club>();
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (!user || user.rol !== "admin") {
+      return;
+    }
+
+    let isMounted = true;
+
+    const fetchAdminClub = async () => {
+      try {
+        const adminClub = await getAdminClub(user.id);
+        if (isMounted) {
+          setClub(adminClub);
+        }
+      } catch (error) {
+        console.error("Error fetching admin club:", error);
+        if (isMounted) {
+          setClub(undefined);
+        }
+      }
+    };
+
+    fetchAdminClub();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user]);
+
+  useEffect(() => {
+    console.log(club)
+  }, [club])
 
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -57,36 +96,36 @@ export default function AdminTorneosPage() {
     setForm((f) => ({ ...f, [name]: value }));
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    if (!user || !club || !club.id) {
+      setSubmitError("Todavía no se pudo cargar el club del administrador. Intenta nuevamente en unos segundos.");
+      return;
+    }
+
+    setSubmitError(null);
+
     const nuevo: TournamentInsert = {
-      nombre: "Open Verano Pádel Club",
-      slug: "open-verano-padel-club",
-      estado: "en_curso",
+      nombre: form.nombre,
+      slug: form.nombre.split(" ").map(p => p.toLowerCase()).join("-"),
+      estado: "inscripciones",
       visibilidad: "publico",
 
-      categoria: "5ta",
-      nivel: "Intermedio",
-      ciudad: "Rosario",
-      provincia: "Santa Fe",
-      direccion: "Av. Pellegrini 1450",
+      categoria: form.categoria,
+      nivel: form.nivel,
+      ciudad: club.ciudad,
+      provincia: club.provincia,
+      direccion: club.direccion,
 
-      fecha_inicio: "2026-09-12T09:00:00.000Z",
-      fecha_fin: "2026-09-13T20:00:00.000Z",
-      hora_inicio: "09:00",
-      fecha_limite_inscripcion: "2026-09-08T23:59:59.000Z",
-      fecha_sorteo: "2026-09-09T19:00:00.000Z",
-      fecha_publicacion_fixture: "2026-09-10T12:00:00.000Z",
-
-      cupos: 32,
+      cupos: Number(form.cupos),
       parejas_inscriptas: 24,
       minimo_parejas: 8,
       cantidad_canchas: 6,
 
-      precio_inscripcion: 25000,
+      precio_inscripcion: Number(form.precio),
 
-      descripcion:
-        "Torneo de pádel para jugadores de categoría 5ta. Dos jornadas de competencia con fase de grupos y eliminación directa.",
+      descripcion: form.descripcion,
       resumen:
         "Torneo de 5ta categoría con 32 cupos y premios para los finalistas.",
 
@@ -96,7 +135,7 @@ export default function AdminTorneosPage() {
       color_tema: "#10B981",
       banner: "/images/torneos/open-verano.jpg",
 
-      destacado: true,
+      /* destacado: true,
       eliminado: false,
       clima_suspendido: false,
 
@@ -107,12 +146,12 @@ export default function AdminTorneosPage() {
       autoplay_playoffs: true,
 
       ranking_otorga_puntos: true,
-      ranking_id: "ranking-padel-001",
+      ranking_id: "ranking-padel-001",*/
 
-      club_id: "club-001",
-      organizador_id: "organizador-001",
+      club_id: club.id,
+      organizador_id: user.id,
 
-      email_contacto: "torneos@padelclub.com",
+      email_contacto: user.email,
       whatsapp_contacto: "+5493415551234",
       instagram: "@padelclubrosario",
 
@@ -122,11 +161,17 @@ export default function AdminTorneosPage() {
 
       motivo_suspension: null,
     };
-    createTournament(nuevo);
-    setLista((l) => [nuevo, ...l]);
-    setForm(emptyForm);
-    setToast(true);
-    setTimeout(() => setToast(false), 3000);
+
+    try {
+      await createTournament(nuevo);
+      setLista((l) => [nuevo, ...l]);
+      setToast(true);
+      setSubmitError(null);
+      setTimeout(() => setToast(false), 3000);
+    } catch (error) {
+      console.error("Error creating tournament:", error);
+      setSubmitError("No se pudo guardar el torneo. Revisá los datos o vuelve a intentarlo.");
+    }
   }
 
   function handleEliminar(id: string) {
@@ -171,6 +216,12 @@ export default function AdminTorneosPage() {
                 <div className="flex items-center gap-2 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-400">
                   <CheckCircle2 className="size-4" />
                   Torneo agregado correctamente.
+                </div>
+              )}
+
+              {submitError && (
+                <div className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+                  {submitError}
                 </div>
               )}
 
@@ -317,8 +368,12 @@ export default function AdminTorneosPage() {
                 />
               </div>
 
-              <Button type="submit" className="w-full bg-emerald-500 text-black hover:bg-emerald-400">
-                Agregar torneo
+              <Button
+                type="submit"
+                disabled={!user || !club}
+                className="w-full bg-emerald-500 text-black hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {!user || !club ? "Cargando club..." : "Agregar torneo"}
               </Button>
             </form>
           </CardContent>

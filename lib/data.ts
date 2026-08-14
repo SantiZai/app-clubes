@@ -207,3 +207,5 @@ export const torneosMock: Tournament[] = [
     actualizado_en: "2026-07-20T14:00:00.000Z",
   },
 ];
+
+export const torneos = torneosMock;
