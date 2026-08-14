@@ -19,9 +19,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import type { Tables } from "@/types/database.types";
-
-type User = Tables<"usuarios">
 
 const links = [
   { href: "/", label: "Inicio" },

@@ -2,11 +2,26 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { torneos as mockData, Torneo } from "@/lib/data";
+import { ArrowLeft, CheckCircle2, PencilLine, Trash2 } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { torneosMock as mockData } from "@/lib/data";
+import { createTournament } from "@/lib/tournamentsUtils";
+
+import type { Tables, TablesInsert } from "@/types/database.types";
+
+type Tournament = Tables<"torneos">
+type TournamentInsert = TablesInsert<"torneos">
 
 type FormState = {
   nombre: string;
-  categoria: Torneo["categoria"];
+  categoria: Tournament["nivel"];
   nivel: string;
   fecha: string;
   fechaFin: string;
@@ -30,18 +45,13 @@ const emptyForm: FormState = {
   formato: "",
 };
 
-const inputClass =
-  "w-full rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-white placeholder:text-zinc-500 transition-colors focus:border-emerald-500 focus:outline-none";
-
 export default function AdminTorneosPage() {
-  const [lista, setLista] = useState<Torneo[]>(mockData);
+  const [lista, setLista] = useState<TournamentInsert[]>(mockData);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [toast, setToast] = useState(false);
 
   function handleChange(
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) {
     const { name, value } = e.target;
     setForm((f) => ({ ...f, [name]: value }));
@@ -49,21 +59,70 @@ export default function AdminTorneosPage() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const nuevo: Torneo = {
-      id: String(Date.now()),
-      nombre: form.nombre,
-      categoria: form.categoria,
-      nivel: form.nivel,
-      fecha: form.fecha,
-      fechaFin: form.fechaFin,
-      inscripcionHasta: form.inscripcionHasta,
-      precio: Number(form.precio),
-      cupos: Number(form.cupos),
-      inscriptos: 0,
-      descripcion: form.descripcion,
-      formato: form.formato,
-      activo: true,
+    const nuevo: TournamentInsert = {
+      nombre: "Open Verano Pádel Club",
+      slug: "open-verano-padel-club",
+      estado: "en_curso",
+      visibilidad: "publico",
+
+      categoria: "5ta",
+      nivel: "Intermedio",
+      ciudad: "Rosario",
+      provincia: "Santa Fe",
+      direccion: "Av. Pellegrini 1450",
+
+      fecha_inicio: "2026-09-12T09:00:00.000Z",
+      fecha_fin: "2026-09-13T20:00:00.000Z",
+      hora_inicio: "09:00",
+      fecha_limite_inscripcion: "2026-09-08T23:59:59.000Z",
+      fecha_sorteo: "2026-09-09T19:00:00.000Z",
+      fecha_publicacion_fixture: "2026-09-10T12:00:00.000Z",
+
+      cupos: 32,
+      parejas_inscriptas: 24,
+      minimo_parejas: 8,
+      cantidad_canchas: 6,
+
+      precio_inscripcion: 25000,
+
+      descripcion:
+        "Torneo de pádel para jugadores de categoría 5ta. Dos jornadas de competencia con fase de grupos y eliminación directa.",
+      resumen:
+        "Torneo de 5ta categoría con 32 cupos y premios para los finalistas.",
+
+      premios: "Trofeos + órdenes de compra",
+      reglamento: "Reglamento oficial de pádel con fase de grupos y playoffs.",
+
+      color_tema: "#10B981",
+      banner: "/images/torneos/open-verano.jpg",
+
+      destacado: true,
+      eliminado: false,
+      clima_suspendido: false,
+
+      permite_lista_espera: true,
+      requiere_confirmacion_admin: true,
+
+      autoplay_fixture: true,
+      autoplay_playoffs: true,
+
+      ranking_otorga_puntos: true,
+      ranking_id: "ranking-padel-001",
+
+      club_id: "club-001",
+      organizador_id: "organizador-001",
+
+      email_contacto: "torneos@padelclub.com",
+      whatsapp_contacto: "+5493415551234",
+      instagram: "@padelclubrosario",
+
+      alias_pago: "PADEL.CLUB",
+      mercado_pago_link: "https://mpago.la/ejemplo1",
+      qr_pago: "/images/qr/open-verano.png",
+
+      motivo_suspension: null,
     };
+    createTournament(nuevo);
     setLista((l) => [nuevo, ...l]);
     setForm(emptyForm);
     setToast(true);
@@ -74,260 +133,256 @@ export default function AdminTorneosPage() {
     setLista((l) => l.filter((t) => t.id !== id));
   }
 
-  function handleToggleActivo(id: string) {
-    setLista((l) =>
-      l.map((t) => (t.id === id ? { ...t, activo: !t.activo } : t))
-    );
-  }
-
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-      <div className="mb-10 flex items-center justify-between">
+      <div className="mb-8 flex items-center justify-between gap-4">
         <div>
-          <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-emerald-400">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-500">
             Panel de administración
           </p>
-          <h1 className="text-2xl font-bold text-white sm:text-3xl">
+          <h1 className="text-3xl font-bold tracking-tight text-white">
             Gestión de torneos
           </h1>
         </div>
-        <Link
-          href="/"
-          className="text-sm text-zinc-400 transition-colors hover:text-white"
+
+        <Button
+          asChild
+          variant="ghost"
+          size="sm"
+          className="text-zinc-300 hover:bg-zinc-800 hover:text-white"
         >
-          ← Inicio
-        </Link>
+          <Link href="/" className="inline-flex items-center gap-2">
+            <ArrowLeft className="size-4" />
+            Inicio
+          </Link>
+        </Button>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-2">
-        <div>
-          <h2 className="mb-5 text-lg font-semibold text-white">
-            Agregar torneo
-          </h2>
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-4 rounded-2xl border border-zinc-800 bg-zinc-900 p-6"
-          >
-            {toast && (
-              <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-400">
-                Torneo agregado correctamente.
-              </div>
-            )}
+      <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+        <Card className="border-zinc-800 bg-zinc-900/90 text-white shadow-2xl shadow-black/20 backdrop-blur-sm">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-xl text-white">Agregar torneo</CardTitle>
+            <CardDescription className="text-zinc-400">Completa los datos del nuevo torneo.</CardDescription>
+          </CardHeader>
 
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-zinc-300">
-                Nombre del torneo
-              </label>
-              <input
-                name="nombre"
-                required
-                value={form.nombre}
-                onChange={handleChange}
-                placeholder="Ej: Copa Verano 2026"
-                className={inputClass}
-              />
-            </div>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {toast && (
+                <div className="flex items-center gap-2 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-400">
+                  <CheckCircle2 className="size-4" />
+                  Torneo agregado correctamente.
+                </div>
+              )}
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-zinc-300">
-                  Categoría
-                </label>
-                <select
-                  name="categoria"
-                  value={form.categoria}
-                  onChange={handleChange}
-                  className={inputClass}
-                >
-                  <option>Masculino</option>
-                  <option>Femenino</option>
-                  <option>Mixto</option>
-                </select>
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-zinc-300">
-                  Nivel
-                </label>
-                <input
-                  name="nivel"
+              <div className="space-y-2">
+                <Label htmlFor="nombre" className="text-zinc-200">Nombre del torneo</Label>
+                <Input
+                  id="nombre"
+                  name="nombre"
                   required
-                  value={form.nivel}
+                  value={form.nombre}
                   onChange={handleChange}
-                  placeholder="Ej: 5ta / 6ta"
-                  className={inputClass}
+                  placeholder="Ej: Copa Verano 2026"
+                  className="border-zinc-700 bg-zinc-950/70 text-white! placeholder:text-zinc-500 focus-visible:border-emerald-500 focus-visible:ring-emerald-500/30"
                 />
               </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-zinc-300">
-                  Inicio
-                </label>
-                <input
-                  name="fecha"
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="categoria" className="text-zinc-200">Categoría</Label>
+                  <Select
+                    id="categoria"
+                    name="categoria"
+                    value={form.categoria!}
+                    onChange={handleChange}
+                    className="border-zinc-700 bg-zinc-950/70 text-white! focus-visible:border-emerald-500 focus-visible:ring-emerald-500/30"
+                  >
+                    <option value="Masculino" className="bg-zinc-950/70">Masculino</option>
+                    <option value="Femenino" className="bg-zinc-950/70">Femenino</option>
+                    <option value="Mixto" className="bg-zinc-950/70">Mixto</option>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="nivel" className="text-zinc-200">Nivel</Label>
+                  <Input
+                    id="nivel"
+                    name="nivel"
+                    required
+                    value={form.nivel}
+                    onChange={handleChange}
+                    placeholder="Ej: 5ta / 6ta"
+                    className="border-zinc-700 bg-zinc-950/70 text-white! placeholder:text-zinc-500 focus-visible:border-emerald-500 focus-visible:ring-emerald-500/30"
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="fecha" className="text-zinc-200">Inicio</Label>
+                  <Input
+                    id="fecha"
+                    name="fecha"
+                    type="date"
+                    required
+                    value={form.fecha}
+                    onChange={handleChange}
+                    className="border-zinc-700 bg-zinc-950/70 text-white! placeholder:text-zinc-500 focus-visible:border-emerald-500 focus-visible:ring-emerald-500/30"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="fechaFin" className="text-zinc-200">Fin</Label>
+                  <Input
+                    id="fechaFin"
+                    name="fechaFin"
+                    type="date"
+                    required
+                    value={form.fechaFin}
+                    onChange={handleChange}
+                    className="border-zinc-700 bg-zinc-950/70 text-white! placeholder:text-zinc-500 focus-visible:border-emerald-500 focus-visible:ring-emerald-500/30"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="inscripcionHasta" className="text-zinc-200">Inscripción hasta</Label>
+                <Input
+                  id="inscripcionHasta"
+                  name="inscripcionHasta"
                   type="date"
                   required
-                  value={form.fecha}
+                  value={form.inscripcionHasta}
                   onChange={handleChange}
-                  className={inputClass}
+                  className="border-zinc-700 bg-zinc-950/70 text-white! placeholder:text-zinc-500 focus-visible:border-emerald-500 focus-visible:ring-emerald-500/30"
                 />
               </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-zinc-300">
-                  Fin
-                </label>
-                <input
-                  name="fechaFin"
-                  type="date"
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="precio" className="text-zinc-200">Precio ($)</Label>
+                  <Input
+                    id="precio"
+                    name="precio"
+                    type="number"
+                    required
+                    min="0"
+                    value={form.precio}
+                    onChange={handleChange}
+                    placeholder="8000"
+                    className="border-zinc-700 bg-zinc-950/70 text-white! placeholder:text-zinc-500 focus-visible:border-emerald-500 focus-visible:ring-emerald-500/30"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="cupos" className="text-zinc-200">Cupos</Label>
+                  <Input
+                    id="cupos"
+                    name="cupos"
+                    type="number"
+                    required
+                    min="2"
+                    value={form.cupos}
+                    onChange={handleChange}
+                    placeholder="32"
+                    className="border-zinc-700 bg-zinc-950/70 text-white! placeholder:text-zinc-500 focus-visible:border-emerald-500 focus-visible:ring-emerald-500/30"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="formato" className="text-zinc-200">Formato</Label>
+                <Input
+                  id="formato"
+                  name="formato"
                   required
-                  value={form.fechaFin}
+                  value={form.formato}
                   onChange={handleChange}
-                  className={inputClass}
+                  placeholder="Ej: Fase de grupos + eliminación directa"
+                  className="border-zinc-700 bg-zinc-950/70 text-white! placeholder:text-zinc-500 focus-visible:border-emerald-500 focus-visible:ring-emerald-500/30"
                 />
               </div>
-            </div>
 
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-zinc-300">
-                Inscripción hasta
-              </label>
-              <input
-                name="inscripcionHasta"
-                type="date"
-                required
-                value={form.inscripcionHasta}
-                onChange={handleChange}
-                className={inputClass}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-zinc-300">
-                  Precio ($)
-                </label>
-                <input
-                  name="precio"
-                  type="number"
+              <div className="space-y-2">
+                <Label htmlFor="descripcion" className="text-zinc-200">Descripción</Label>
+                <Textarea
+                  id="descripcion"
+                  name="descripcion"
                   required
-                  min="0"
-                  value={form.precio}
+                  rows={4}
+                  value={form.descripcion}
                   onChange={handleChange}
-                  placeholder="8000"
-                  className={inputClass}
+                  placeholder="Descripción del torneo..."
+                  className="border-zinc-700 bg-zinc-950/70 text-white! placeholder:text-zinc-500 focus-visible:border-emerald-500 focus-visible:ring-emerald-500/30"
                 />
               </div>
+
+              <Button type="submit" className="w-full bg-emerald-500 text-black hover:bg-emerald-400">
+                Agregar torneo
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <Card className="border-zinc-800 bg-zinc-900/90 text-white shadow-2xl shadow-black/20">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between gap-3">
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-zinc-300">
-                  Cupos
-                </label>
-                <input
-                  name="cupos"
-                  type="number"
-                  required
-                  min="2"
-                  value={form.cupos}
-                  onChange={handleChange}
-                  placeholder="32"
-                  className={inputClass}
-                />
+                <CardTitle className="text-xl text-white">Torneos</CardTitle>
+                <CardDescription className="text-zinc-400">{lista.length} torneo(s) cargado(s)</CardDescription>
               </div>
             </div>
+          </CardHeader>
 
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-zinc-300">
-                Formato
-              </label>
-              <input
-                name="formato"
-                required
-                value={form.formato}
-                onChange={handleChange}
-                placeholder="Ej: Fase de grupos + eliminación directa"
-                className={inputClass}
-              />
-            </div>
-
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-zinc-300">
-                Descripción
-              </label>
-              <textarea
-                name="descripcion"
-                required
-                rows={3}
-                value={form.descripcion}
-                onChange={handleChange}
-                placeholder="Descripción del torneo..."
-                className={`${inputClass} resize-none`}
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="w-full rounded-lg bg-emerald-500 py-2.5 font-semibold text-black transition-colors hover:bg-emerald-400"
-            >
-              Agregar torneo
-            </button>
-          </form>
-        </div>
-
-        <div>
-          <h2 className="mb-5 text-lg font-semibold text-white">
-            Torneos ({lista.length})
-          </h2>
-          <div className="space-y-3">
+          <CardContent className="space-y-3">
             {lista.length === 0 && (
-              <p className="py-10 text-center text-sm text-zinc-600">
+              <div className="rounded-lg border border-dashed border-zinc-700 bg-zinc-950/30 p-8 text-center text-sm text-zinc-400">
                 No hay torneos cargados.
-              </p>
+              </div>
             )}
+
             {lista.map((t) => (
               <div
-                key={t.id}
-                className="flex items-start justify-between gap-3 rounded-xl border border-zinc-800 bg-zinc-900 p-4"
+                key={t.id!}
+                className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-4 shadow-sm transition-colors hover:bg-zinc-950"
               >
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="truncate text-sm font-medium text-white">
-                      {t.nombre}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="truncate text-sm font-semibold text-white">{t.nombre}</p>
+                      {/* TODO: el badge debe decir el estado del torneo */}
+                      {t.estado == "finalizado" && (
+                        <Badge className="border-zinc-700 bg-zinc-800 text-zinc-300">Finalizado</Badge>
+                      )}
+                    </div>
+                    <p className="mt-1 text-xs text-zinc-400">
+                      {t.categoria} · {t.nivel} · {t.parejas_inscriptas}/{t.cupos} inscriptos
                     </p>
-                    {!t.activo && (
-                      <span className="shrink-0 rounded-full bg-zinc-800 px-2 py-0.5 text-xs text-zinc-500">
-                        inactivo
-                      </span>
-                    )}
                   </div>
-                  <p className="mt-0.5 text-xs text-zinc-500">
-                    {t.categoria} · {t.nivel} · {t.inscriptos}/{t.cupos}{" "}
-                    inscriptos
-                  </p>
                 </div>
-                <div className="flex shrink-0 items-center gap-3">
-                  <button
-                    onClick={() => handleToggleActivo(t.id)}
-                    className="text-xs text-zinc-500 transition-colors hover:text-zinc-300"
+
+                <div className="mt-4 flex items-center justify-end gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleEliminar(t.id!)}
+                    className="h-8 px-2 text-xs text-red-400 hover:bg-red-500/10 hover:text-red-300"
                   >
-                    {t.activo ? "Desactivar" : "Activar"}
-                  </button>
-                  <button
-                    onClick={() => handleEliminar(t.id)}
-                    className="text-xs text-zinc-600 transition-colors hover:text-red-400"
-                  >
+                    <Trash2 className="mr-1 size-3.5" />
                     Eliminar
-                  </button>
-                  <Link
-                    href={`/admin/torneos/${t.id}/manage`}
-                    className="text-xs text-zinc-500 transition-colors hover:text-zinc-300"
-                  >
-                    Gestionar
-                  </Link>
+                  </Button>
+
+                  <Button asChild variant="ghost" size="sm" className="h-8 px-2 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white">
+                    <Link href={`/admin/torneos/${t.id}/manage`} className="inline-flex items-center gap-1">
+                      <PencilLine className="size-3.5" />
+                      Gestionar
+                    </Link>
+                  </Button>
                 </div>
               </div>
             ))}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
