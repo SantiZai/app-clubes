@@ -147,7 +147,8 @@ export default function AdminTorneosPage() {
           setClub(adminClub);
         }
       } catch (error) {
-        console.error("Error fetching admin club:", error);
+        const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+        console.error("Error fetching admin club:", errorMsg);
         if (isMounted) {
           setClub(undefined);
         }

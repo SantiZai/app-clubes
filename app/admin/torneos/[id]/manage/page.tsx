@@ -2,8 +2,14 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
 
-type Availability = { day: string; start: string; end: string };
+type Availability = { date: string; start: string; end?: string; isFlexible: boolean };
 
 type Pair = {
   id: string;
@@ -48,6 +54,8 @@ export default function ManageTorneoPage({
   const [loading, setLoading] = useState(false);
   const [savingZones, setSavingZones] = useState(false);
   const [zonesSaved, setZonesSaved] = useState(false);
+  const [tournamentStartDate, setTournamentStartDate] = useState<Date | null>(null);
+  const [tournamentEndDate, setTournamentEndDate] = useState<Date | null>(null);
 
   const assignedPairsCount = zones.reduce((sum, zone) => sum + zone.pairs.length, 0);
   const totalMatchesCount = zones.reduce((sum, zone) => sum + zone.matches.length, 0);
@@ -93,9 +101,10 @@ export default function ManageTorneoPage({
 
   // availability UI state for manual add
   const [availabilities, setAvailabilities] = useState<Availability[]>([]);
-  const [selectedDay, setSelectedDay] = useState<string>("fri");
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [startTime, setStartTime] = useState<string>("17:00");
   const [endTime, setEndTime] = useState<string>("21:00");
+  const [isFlexible, setIsFlexible] = useState<boolean>(false);
   const [editingAvailabilityIndex, setEditingAvailabilityIndex] = useState<number | null>(null);
 
   useEffect(() => {
@@ -128,7 +137,28 @@ export default function ManageTorneoPage({
     if (!routeId) return
     fetchSavedPairs();
     fetchExistingPlayers();
+    fetchTournamentDates();
   }, [routeId]);
+
+  async function fetchTournamentDates() {
+    try {
+      if (!routeId) return;
+      const res = await fetch(`/api/admin/torneos/${routeId}`);
+      if (!res.ok) {
+        console.error('Error status:', res.status);
+        return;
+      }
+      const data = await res.json();
+      console.log('Tournament data:', data);
+      if (data.tournament) {
+        const tournament = data.tournament;
+        if (tournament.fecha) setTournamentStartDate(new Date(tournament.fecha));
+        if (tournament.fecha_fin) setTournamentEndDate(new Date(tournament.fecha_fin));
+      }
+    } catch (error) {
+      console.error("Error cargando fechas del torneo:", error);
+    }
+  }
 
   async function fetchSavedPairs() {
     try {
@@ -192,18 +222,27 @@ export default function ManageTorneoPage({
   }
 
   function validateAvailability(a: Availability) {
-    if (!a.day || !a.start || !a.end) return "Completar día, desde y hasta";
-    if (a.start === a.end) return "La franja debe tener duración mayor a 0";
-    const [sh, sm] = a.start.split(":").map(Number);
-    const [eh, em] = a.end.split(":").map(Number);
-    const sMinutes = sh * 60 + sm;
-    const eMinutes = eh * 60 + em;
-    if (eMinutes <= sMinutes) return "El horario 'Hasta' debe ser posterior a 'Desde'";
+    if (!a.date || !a.start) return "Completar fecha y hora de inicio";
+    if (!a.isFlexible && !a.end) return "Completar hora de fin o marcar como flexible";
+    if (!a.isFlexible && a.start === a.end) return "La franja debe tener duración mayor a 0";
+    
+    if (!a.isFlexible) {
+      const [sh, sm] = a.start.split(":").map(Number);
+      const [eh, em] = (a.end || "").split(":").map(Number);
+      const sMinutes = sh * 60 + sm;
+      const eMinutes = eh * 60 + em;
+      if (eMinutes <= sMinutes) return "El horario 'Hasta' debe ser posterior a 'Desde'";
+    }
     return null;
   }
 
   function addOrUpdateAvailability() {
-    const candidate: Availability = { day: selectedDay, start: startTime, end: endTime };
+    const candidate: Availability = { 
+      date: format(selectedDate, "yyyy-MM-dd"), 
+      start: startTime, 
+      end: !isFlexible ? endTime : undefined,
+      isFlexible: isFlexible
+    };
     const err = validateAvailability(candidate);
     if (err) {
       setStatus(err);
@@ -211,7 +250,7 @@ export default function ManageTorneoPage({
     }
 
     const existsIndex = availabilities.findIndex(
-      (x) => x.day === candidate.day && x.start === candidate.start && x.end === candidate.end
+      (x) => x.date === candidate.date && x.start === candidate.start && x.isFlexible === candidate.isFlexible
     );
     if (existsIndex !== -1 && editingAvailabilityIndex === null) {
       setStatus("Esa franja ya fue agregada");
@@ -225,6 +264,10 @@ export default function ManageTorneoPage({
       return next;
     });
     setEditingAvailabilityIndex(null);
+    setSelectedDate(new Date());
+    setStartTime("17:00");
+    setEndTime("21:00");
+    setIsFlexible(false);
     setStatus(null);
   }
 
@@ -250,9 +293,10 @@ export default function ManageTorneoPage({
 
   function editAvailability(i: number) {
     const a = availabilities[i];
-    setSelectedDay(a.day);
+    setSelectedDate(new Date(a.date));
     setStartTime(a.start);
-    setEndTime(a.end);
+    setEndTime(a.end || "21:00");
+    setIsFlexible(a.isFlexible);
     setEditingAvailabilityIndex(i);
   }
 
@@ -853,24 +897,12 @@ export default function ManageTorneoPage({
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
       <style jsx>{`
-        input, textarea, select {
+        input, textarea {
           color: #F5F5F5 !important;
           -webkit-text-fill-color: #F5F5F5 !important;
         }
         /* Ensure placeholders remain grey */
         ::placeholder { color: #71717A !important; }
-        /* Attempt to style native option dropdowns (may be ignored by some browsers) */
-        select {
-          background: #1F1F22 !important;
-          border-color: #333338 !important;
-          -webkit-appearance: none !important;
-          appearance: none !important;
-        }
-        option {
-          background: #1F1F22 !important;
-          color: #F5F5F5 !important;
-        }
-        select::-ms-expand { display: none; }
       `}</style>
       <button onClick={() => router.back()} className="mb-6 text-sm text-[#A1A1AA] transition-colors hover:text-white">← Volver</button>
 
@@ -896,30 +928,86 @@ export default function ManageTorneoPage({
 
                 <div className="mt-4 space-y-3">
                   <div>
-                    <div className="mb-2 text-xs text-[#D4D4D8]">Día</div>
-                    <div className="flex flex-wrap gap-2">
-                      {days.map(d=> (
-                        <button key={d.key} type="button" onClick={()=>setSelectedDay(d.key)} className={`inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-sm min-w-[44px] ${selectedDay===d.key? 'bg-[#00C389] text-black border-2 border-[#00C389]':'bg-[#2A2A2F] text-[#F5F5F5] border border-[#2A2A2F]'} hover:brightness-105`}>
-                          {d.label}
-                        </button>
-                      ))}
+                    <div className="mb-2 text-xs text-[#D4D4D8]">Fecha</div>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full justify-start border-[#333338] bg-[#1F1F22] text-[#F5F5F5] hover:bg-[#262629] hover:text-[#F5F5F5]">
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {format(selectedDate, "dd/MM/yyyy")}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent align="start" className="w-auto border-[#333338] bg-[#1F1F22] p-0">
+                        <Calendar 
+                          mode="single" 
+                          selected={selectedDate} 
+                          onSelect={(date) => date && setSelectedDate(date)}
+                          disabled={(date) => {
+                            if (!tournamentStartDate || !tournamentEndDate) return false;
+                            const start = new Date(tournamentStartDate);
+                            const end = new Date(tournamentEndDate);
+                            start.setHours(0, 0, 0, 0);
+                            end.setHours(23, 59, 59, 999);
+                            const checkDate = new Date(date);
+                            checkDate.setHours(0, 0, 0, 0);
+                            return checkDate < start || checkDate > end;
+                          }}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                    <div>
+                      <div className="mb-1 text-xs text-[#D4D4D8]">Hora de inicio</div>
+                      <Select value={startTime} onValueChange={setStartTime}>
+                        <SelectTrigger className="w-full border border-[#333338] bg-[#1F1F22] text-[#F5F5F5] rounded-lg focus-visible:border-[#00C389] focus-visible:ring-2 focus-visible:ring-[#00C389]/20">
+                          <SelectValue placeholder="Selecciona hora" />
+                        </SelectTrigger>
+                        <SelectContent className="border-[#333338] bg-[#1F1F22] text-[#F5F5F5]">
+                          <SelectGroup>
+                            {timeOptions.map(t => (
+                              <SelectItem key={t} value={t} className="focus:bg-[#00C389] focus:text-black">{t}</SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {!isFlexible && (
+                      <div>
+                        <div className="mb-1 text-xs text-[#D4D4D8]">Hora de fin</div>
+                        <Select value={endTime} onValueChange={setEndTime}>
+                          <SelectTrigger className="w-full border border-[#333338] bg-[#1F1F22] text-[#F5F5F5] rounded-lg focus-visible:border-[#00C389] focus-visible:ring-2 focus-visible:ring-[#00C389]/20">
+                            <SelectValue placeholder="Selecciona hora" />
+                          </SelectTrigger>
+                          <SelectContent className="border-[#333338] bg-[#1F1F22] text-[#F5F5F5]">
+                            <SelectGroup>
+                              {timeOptions.map(t => (
+                                <SelectItem key={t} value={t} className="focus:bg-[#00C389] focus:text-black">{t}</SelectItem>
+                              ))}
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
+                    <div className="flex flex-col items-start justify-between gap-2">
+                      <div className="text-xs text-[#D4D4D8]">Tipo</div>
+                      <button 
+                        type="button"
+                        onClick={() => setIsFlexible(!isFlexible)} 
+                        className={`px-3 py-2 text-xs font-medium rounded-lg transition-colors ${isFlexible ? 'bg-[#00C389] text-black' : 'bg-[#2A2A2F] text-[#F5F5F5]'}`}
+                      >
+                        {isFlexible ? 'Flexible desde' : 'Hasta hora fija'}
+                      </button>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:items-end">
-                    <div>
-                      <div className="mb-1 text-xs text-[#D4D4D8]">Desde</div>
-                      <select value={startTime} onChange={(e)=>setStartTime(e.target.value)} className="w-full rounded-lg bg-[#1F1F22] px-3 py-3 text-sm text-[#F5F5F5] border border-[#333338] focus:border-[#00C389] focus:ring-2 focus:ring-[#00C389]/20 outline-none">{timeOptions.map(t=>(<option key={t} value={t}>{t}</option>))}</select>
-                    </div>
-
-                    <div>
-                      <div className="mb-1 text-xs text-[#D4D4D8]">Hasta</div>
-                      <select value={endTime} onChange={(e)=>setEndTime(e.target.value)} className="w-full rounded-lg bg-[#1F1F22] px-3 py-3 text-sm text-[#F5F5F5] border border-[#333338] focus:border-[#00C389] focus:ring-2 focus:ring-[#00C389]/20 outline-none">{timeOptions.map(t=>(<option key={t} value={t}>{t}</option>))}</select>
-                    </div>
-
-                    <div className="flex items-end">
-                      <button onClick={addOrUpdateAvailability} className="w-full rounded-lg bg-[#00C389] px-4 py-3 text-sm font-semibold text-black hover:bg-[#05b97a] disabled:opacity-60">{editingAvailabilityIndex===null? 'Agregar disponibilidad':'Actualizar'}</button>
-                    </div>
+                  <div className="flex gap-2">
+                    <button onClick={addOrUpdateAvailability} className="flex-1 rounded-lg bg-[#00C389] px-4 py-3 text-sm font-semibold text-black hover:bg-[#05b97a] disabled:opacity-60">{editingAvailabilityIndex===null? 'Agregar disponibilidad':'Actualizar'}</button>
+                    {editingAvailabilityIndex !== null && (
+                      <button onClick={() => { setEditingAvailabilityIndex(null); setSelectedDate(new Date()); setStartTime("17:00"); setEndTime("21:00"); setIsFlexible(false); }} className="rounded-lg border border-[#333338] px-4 py-3 text-sm font-semibold text-[#F5F5F5] hover:bg-[#2A2A2F]">Cancelar</button>
+                    )}
                   </div>
 
                   {availabilities.length>0 && (
@@ -927,12 +1015,12 @@ export default function ManageTorneoPage({
                       <div className="mb-2 text-sm text-[#D4D4D8]">Disponibilidades agregadas</div>
                       <div className="space-y-2">
                         {availabilities.map((a,i)=>(
-                          <div key={`${a.day}-${a.start}-${a.end}-${i}`} className="flex items-center justify-between gap-3 rounded-lg border border-[#2A2A2F] bg-[#18181B] px-3 py-2">
+                          <div key={`${a.date}-${a.start}-${i}`} className="flex items-center justify-between gap-3 rounded-lg border border-[#2A2A2F] bg-[#18181B] px-3 py-2">
                             <div className="flex items-center gap-3">
                               <span className="h-2 w-2 rounded-full bg-[#00C389] block" />
                               <div>
-                                <div className="text-sm text-[#F5F5F5] font-medium">{days.find(d=>d.key===a.day)?.label ?? a.day}</div>
-                                <div className="text-xs text-[#A1A1AA]">{a.start} — {a.end}</div>
+                                <div className="text-sm text-[#F5F5F5] font-medium">{format(new Date(a.date), "dd/MM/yyyy")}</div>
+                                <div className="text-xs text-[#A1A1AA]">{a.start} {a.isFlexible ? '→ flexible' : `— ${a.end}`}</div>
                               </div>
                             </div>
                             <div className="flex gap-2">

@@ -78,7 +78,7 @@ export default function TorneoCard({ torneo }: { torneo: Torneo }) {
 
           <div className="text-right">
             <div className="text-sm font-semibold text-white">
-              ${torneo.precio.toLocaleString("es-AR")}
+              ${torneo.precio ? torneo.precio.toLocaleString("es-AR") : "-"}
             </div>
           </div>
         </div>

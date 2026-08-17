@@ -90,10 +90,10 @@ function generateZones(pairs, tournamentType = 'normal', courts = 2) {
     const av = p.availability ?? [];
     for (const a of av) {
       const s = timeToMinutes(a.start);
-      const e = timeToMinutes(a.end);
-      if (!pairAvail[p.id][a.day]) pairAvail[p.id][a.day] = [];
-      pairAvail[p.id][a.day].push([s, e]);
-      allDays.add(a.day);
+      const e = a.isFlexible ? 23 * 60 + 59 : timeToMinutes(a.end || "23:59");
+      if (!pairAvail[p.id][a.date]) pairAvail[p.id][a.date] = [];
+      pairAvail[p.id][a.date].push([s, e]);
+      allDays.add(a.date);
     }
   }
 

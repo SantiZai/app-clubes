@@ -13,8 +13,9 @@ export const getAdminClub = async (adminId: string): Promise<Club> => {
     .single();
 
     if (error) {
-      console.error(`Error fetching club for the id ${adminId}, error message:`, error);
-      throw error;
+      const errorMsg = error instanceof Error ? error.message : JSON.stringify(error, null, 2);
+      console.error(`Error fetching club for admin_id ${adminId}:`, errorMsg);
+      throw new Error(`Failed to fetch club for admin: ${errorMsg}`);
     }
 
     return data;
