@@ -59,7 +59,7 @@ export default function AdminDashboardPage() {
           </p>
           <h1 className="text-3xl font-bold text-white">Bienvenido, administrador</h1>
           <p className="mt-2 max-w-2xl text-sm text-zinc-400">
-            Usa este panel para gestionar torneos y participantes. Puedes crear un torneo nuevo, administrar inscripciones y revisar el estado de los eventos.
+            Usa este panel para gestionar tu club, torneos y participantes. Puedes actualizar la información del club, crear eventos y administrar inscripciones.
           </p>
         </div>
       </div>
@@ -75,6 +75,19 @@ export default function AdminDashboardPage() {
           </p>
           <span className="mt-4 inline-flex text-sm text-emerald-400 group-hover:text-emerald-300">
             Ir a torneos →
+          </span>
+        </Link>
+
+        <Link
+          href="/admin/club"
+          className="group rounded-3xl border border-zinc-800 bg-zinc-900 p-8 transition hover:border-emerald-500"
+        >
+          <h2 className="mb-2 text-xl font-semibold text-white">Mi club</h2>
+          <p className="text-sm text-zinc-400">
+            Gestiona la información y la configuración de tu club desde el panel de administración.
+          </p>
+          <span className="mt-4 inline-flex text-sm text-emerald-400 group-hover:text-emerald-300">
+            Gestionar club →
           </span>
         </Link>
 
